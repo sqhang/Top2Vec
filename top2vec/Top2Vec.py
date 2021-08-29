@@ -242,6 +242,7 @@ class Top2Vec:
         self.embedding_model_path = embedding_model_path
 
         if embedding_model == 'doc2vec':
+            self.embedding_model = 'doc2vec'
 
             if self.embedding_model_path != None:
                 self.model = Doc2Vec.load(embedding_model_path)
