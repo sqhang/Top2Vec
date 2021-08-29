@@ -242,7 +242,6 @@ class Top2Vec:
         self.embedding_model_path = embedding_model_path
 
         if embedding_model == 'doc2vec':
-            self.embedding_model = 'doc2vec'
 
             if self.embedding_model_path != None:
                 self.model = Doc2Vec.load(embedding_model_path)
@@ -310,11 +309,13 @@ class Top2Vec:
                     doc2vec_args["documents"] = train_corpus
 
                 logger.info('Creating joint document/word embedding')
-                self.embedding_model = 'doc2vec'
+
                 self.model = Doc2Vec(**doc2vec_args)
 
                 if use_corpus_file:
                     temp.close()
+
+            self.embedding_model = 'doc2vec'
 
         elif embedding_model in acceptable_embedding_models:
 
@@ -568,7 +569,6 @@ class Top2Vec:
             self.document_vectors = document_vectors
 
     def _get_document_vectors(self, norm=True):
-
         if self.embedding_model == 'doc2vec':
             if self.embedding_model_path == None:
                 if norm:
