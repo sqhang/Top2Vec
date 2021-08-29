@@ -239,12 +239,12 @@ class Top2Vec:
                                        "universal-sentence-encoder",
                                        "distiluse-base-multilingual-cased"]
 
-        self.embedding_model = embedding_model
+        #self.embedding_model = embedding_model
         self.embedding_model_path = embedding_model_path
 
-        if self.embedding_model == 'doc2vec':
+        if embedding_model == 'doc2vec':
 
-            if self.embedding_model_path != None:
+            if self.embedding_model_path is not None:
                 self.model = Doc2Vec.load(embedding_model_path)
                 tokenized_corpus = [default_tokenizer(doc) for doc in documents]
                 # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
@@ -254,6 +254,7 @@ class Top2Vec:
                 for i in range(corpus_size):
                     self.document_vectors[i] = self.model.infer_vector(tokenized_corpus[i])
                 self.document_vectors = self._l2_normalize(self.document_vectors)
+                self.embedding_model = 'doc2vec'
 
             else:
                 # validate training inputs
@@ -313,13 +314,13 @@ class Top2Vec:
                 logger.info('Creating joint document/word embedding')
 
                 self.model = Doc2Vec(**doc2vec_args)
-
+                self.embedding_model = 'doc2vec'
                 if use_corpus_file:
                     temp.close()
 
             #self.embedding_model = 'doc2vec'
 
-        elif self.embedding_model in acceptable_embedding_models:
+        elif embedding_model in acceptable_embedding_models:
 
             self.embed = None
             self.embedding_model = embedding_model
@@ -573,7 +574,7 @@ class Top2Vec:
     def _get_document_vectors(self, norm=True):
 
         if self.embedding_model == 'doc2vec':
-            if self.embedding_model_path != None:
+            if self.embedding_model_path is not None:
                 return self.document_vectors
             else:
                 if norm:
