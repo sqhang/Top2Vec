@@ -249,6 +249,7 @@ class Top2Vec:
                 tokenized_corpus = [default_tokenizer(doc) for doc in documents]
                 # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
                 corpus_size = len(tokenized_corpus)
+                logger.info('Infering document vectors with pretrained model')
                 self.document_vectors = np.zeros(shape=(corpus_size, 300))
                 for i in range(corpus_size):
                     self.document_vectors[i] = self.model.infer_vector(tokenized_corpus[i])
@@ -570,15 +571,16 @@ class Top2Vec:
             self.document_vectors = document_vectors
 
     def _get_document_vectors(self, norm=True):
+
         if self.embedding_model == 'doc2vec':
-            if self.embedding_model_path == None:
+            if self.embedding_model_path != None:
+                return self.document_vectors
+            else:
                 if norm:
                     self.model.docvecs.init_sims()
                     return self.model.docvecs.vectors_docs_norm
                 else:
                     return self.model.docvecs.vectors_docs
-            else:
-                return self.document_vectors
         else:
             return self.document_vectors
 
