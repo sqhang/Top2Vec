@@ -243,66 +243,77 @@ class Top2Vec:
 
         if embedding_model == 'doc2vec':
 
-            # validate training inputs
-            if speed == "fast-learn":
-                hs = 0
-                negative = 5
-                epochs = 40
-            elif speed == "learn":
-                hs = 1
-                negative = 0
-                epochs = 40
-            elif speed == "deep-learn":
-                hs = 1
-                negative = 0
-                epochs = 400
-            elif speed == "test-learn":
-                hs = 0
-                negative = 5
-                epochs = 1
-            else:
-                raise ValueError("speed parameter needs to be one of: fast-learn, learn or deep-learn")
-
-            if workers is None:
-                pass
-            elif isinstance(workers, int):
-                pass
-            else:
-                raise ValueError("workers needs to be an int")
-
-            doc2vec_args = {"vector_size": 300,
-                            "min_count": min_count,
-                            "window": 15,
-                            "sample": 1e-5,
-                            "negative": negative,
-                            "hs": hs,
-                            "epochs": epochs,
-                            "dm": 0,
-                            "dbow_words": 1}
-
-            if workers is not None:
-                doc2vec_args["workers"] = workers
-
-            logger.info('Pre-processing documents for training')
-
-            if use_corpus_file:
-                processed = [' '.join(tokenizer(doc)) for doc in documents]
-                lines = "\n".join(processed)
-                temp = tempfile.NamedTemporaryFile(mode='w+t')
-                temp.write(lines)
-                doc2vec_args["corpus_file"] = temp.name
-
+            if self.embedding_model_path != None:
+                self.model = Doc2Vec.load(embedding_model_path)
+                tokenized_corpus = [default_tokenizer(doc) for doc in documents]
+                # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
+                corpus_size = len(tokenized_corpus)
+                self.document_vectors = np.zeros(shape=(corpus_size, 300))
+                for i in range(corpus_size):
+                    self.document_vectors[i] = self.model.infer_vector(tokenized_corpus[i])
+                self.document_vectors = self._l2_normalize(self.document_vectors)
 
             else:
-                train_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
-                doc2vec_args["documents"] = train_corpus
+                # validate training inputs
+                if speed == "fast-learn":
+                    hs = 0
+                    negative = 5
+                    epochs = 40
+                elif speed == "learn":
+                    hs = 1
+                    negative = 0
+                    epochs = 40
+                elif speed == "deep-learn":
+                    hs = 1
+                    negative = 0
+                    epochs = 400
+                elif speed == "test-learn":
+                    hs = 0
+                    negative = 5
+                    epochs = 1
+                else:
+                    raise ValueError("speed parameter needs to be one of: fast-learn, learn or deep-learn")
 
-            logger.info('Creating joint document/word embedding')
-            self.embedding_model = 'doc2vec'
-            self.model = Doc2Vec(**doc2vec_args)
+                if workers is None:
+                    pass
+                elif isinstance(workers, int):
+                    pass
+                else:
+                    raise ValueError("workers needs to be an int")
 
-            if use_corpus_file:
-                temp.close()
+                doc2vec_args = {"vector_size": 300,
+                                "min_count": min_count,
+                                "window": 15,
+                                "sample": 1e-5,
+                                "negative": negative,
+                                "hs": hs,
+                                "epochs": epochs,
+                                "dm": 0,
+                                "dbow_words": 1}
+
+                if workers is not None:
+                    doc2vec_args["workers"] = workers
+
+                logger.info('Pre-processing documents for training')
+
+                if use_corpus_file:
+                    processed = [' '.join(tokenizer(doc)) for doc in documents]
+                    lines = "\n".join(processed)
+                    temp = tempfile.NamedTemporaryFile(mode='w+t')
+                    temp.write(lines)
+                    doc2vec_args["corpus_file"] = temp.name
+
+
+                else:
+                    train_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
+                    doc2vec_args["documents"] = train_corpus
+
+                logger.info('Creating joint document/word embedding')
+                self.embedding_model = 'doc2vec'
+                self.model = Doc2Vec(**doc2vec_args)
+
+                if use_corpus_file:
+                    temp.close()
 
         elif embedding_model in acceptable_embedding_models:
 
@@ -558,12 +569,14 @@ class Top2Vec:
     def _get_document_vectors(self, norm=True):
 
         if self.embedding_model == 'doc2vec':
-
-            if norm:
-                self.model.docvecs.init_sims()
-                return self.model.docvecs.vectors_docs_norm
+            if self.embedding_model_path == None:
+                if norm:
+                    self.model.docvecs.init_sims()
+                    return self.model.docvecs.vectors_docs_norm
+                else:
+                    return self.model.docvecs.vectors_docs
             else:
-                return self.model.docvecs.vectors_docs
+                return self.document_vectors
         else:
             return self.document_vectors
 
