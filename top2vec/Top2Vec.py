@@ -245,11 +245,14 @@ class Top2Vec:
         if embedding_model == 'doc2vec':
 
             if self.embedding_model_path is not None:
+                print("go through this track")
                 self.model = Doc2Vec.load(embedding_model_path)
-                tokenized_corpus = [default_tokenizer(doc) for doc in documents]
+                tokenized_corpus = [tokenizer(doc) for doc in documents]
+                print("generated tokenized documents")
                 # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
                 corpus_size = len(tokenized_corpus)
                 logger.info('Infering document vectors with pretrained model')
+                print("Infering document vectors with pretrained model")
                 self.document_vectors = np.zeros(shape=(corpus_size, 300))
                 for i in range(corpus_size):
                     self.document_vectors[i] = self.model.infer_vector(tokenized_corpus[i])
