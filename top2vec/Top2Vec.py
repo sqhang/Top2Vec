@@ -248,7 +248,6 @@ class Top2Vec:
                 print("go through this track")
                 self.model = Doc2Vec.load(embedding_model_path)
                 tokenized_corpus = [tokenizer(doc) for doc in documents]
-                print("generated tokenized documents")
                 # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
                 corpus_size = len(tokenized_corpus)
                 logger.info('Infering document vectors with pretrained model')
