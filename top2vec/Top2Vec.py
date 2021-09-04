@@ -272,6 +272,10 @@ class Top2Vec:
                     hs = 1
                     negative = 0
                     epochs = 400
+                elif speed == "deep-deep-learn":
+                    hs = 1
+                    negative = 0
+                    epochs = 1000
                 elif speed == "test-learn":
                     hs = 0
                     negative = 5
