@@ -245,7 +245,7 @@ class Top2Vec:
         if embedding_model == 'doc2vec':
 
             if self.embedding_model_path is not None:
-                print("go through this track")
+                #print("go through this track")
                 self.model = Doc2Vec.load(embedding_model_path)
                 tokenized_corpus = [tokenizer(doc) for doc in documents]
                 # text_corpus = [TaggedDocument(tokenizer(doc), [i]) for i, doc in enumerate(documents)]
@@ -257,6 +257,17 @@ class Top2Vec:
                     self.document_vectors[i] = self.model.infer_vector(tokenized_corpus[i])
                 self.document_vectors = self._l2_normalize(self.document_vectors)
                 self.embedding_model = 'doc2vec'
+
+                def return_doc(doc):
+                    return doc
+
+                vectorizer = CountVectorizer(tokenizer=return_doc, preprocessor=return_doc)
+                doc_word_counts = vectorizer.fit_transform(tokenized_corpus)
+                words = vectorizer.get_feature_names()
+                word_counts = np.array(np.sum(doc_word_counts, axis=0).tolist()[0])
+                vocab_inds = np.where(word_counts > min_count)[0]
+                #vocab = np.array([words[i] for i in vocab_inds])
+                self.vocab = [words[ind] for ind in vocab_inds]
 
             else:
                 # validate training inputs
@@ -732,9 +743,26 @@ class Top2Vec:
         top_words = np.flip(np.argsort(res, axis=1), axis=1)
         top_scores = np.flip(np.sort(res, axis=1), axis=1)
 
-        for words, scores in zip(top_words, top_scores):
-            topic_words.append([self._index2word(i) for i in words[0:50]])
-            topic_word_scores.append(scores[0:50])
+        if self.embedding_model == 'doc2vec' and self.embedding_model_path is not None:
+            for words, scores in zip(top_words, top_scores):
+                topic_words_list = []
+                topic_word_scores_list = []
+                idx1 = 0
+                idx2 = 0
+                while idx1 < 50:
+                    keyword = self.model.wv.index2word[words[idx2]]
+                    if keyword in self.vocab:
+                        # print("True")
+                        topic_words_list.append(keyword)
+                        topic_word_scores_list.append(scores[idx2])
+                        idx1 += 1
+                    idx2 += 1
+                topic_words.append(topic_words_list)
+                topic_word_scores.append(topic_word_scores_list)
+        else:
+            for words, scores in zip(top_words, top_scores):
+                topic_words.append([self._index2word(i) for i in words[0:50]])
+                topic_word_scores.append(scores[0:50])
 
         topic_words = np.array(topic_words)
         topic_word_scores = np.array(topic_word_scores)
